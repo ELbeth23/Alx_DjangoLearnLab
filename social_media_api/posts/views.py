@@ -41,24 +41,7 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
 
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-
-    def perform_create(self, serializer):
-        comment = serializer.save(author=self.request.user)
-        from django.contrib.contenttypes.models import ContentType
-        from notifications.models import Notification
-        if comment.post.author != self.request.user:
-            Notification.objects.create(
-                recipient=comment.post.author,
-                actor=self.request.user,
-                verb="commented on your post",
-                content_type=ContentType.objects.get_for_model(comment.post),
-                object_id=comment.post.id
-            )
-
+# Like and Unlike post functions should be outside the class
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def like_post(request, pk):
@@ -97,3 +80,23 @@ def unlike_post(request, pk):
     Like.objects.filter(post=post, user=request.user).delete()
 
     return Response({"message": "Post unliked"})
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        comment = serializer.save(author=self.request.user)
+        from django.contrib.contenttypes.models import ContentType
+        from notifications.models import Notification
+        if comment.post.author != self.request.user:
+            Notification.objects.create(
+                recipient=comment.post.author,
+                actor=self.request.user,
+                verb="commented on your post",
+                content_type=ContentType.objects.get_for_model(comment.post),
+                object_id=comment.post.id
+            )
+

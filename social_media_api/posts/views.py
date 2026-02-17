@@ -9,6 +9,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .serializers import PostSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.contenttypes.models import ContentType
+from notifications.models import Notification
+from .models import Like
+
 
 
 @api_view(['GET'])
@@ -41,4 +47,53 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        comment = serializer.save(author=self.request.user)
+        from django.contrib.contenttypes.models import ContentType
+        from notifications.models import Notification
+        if comment.post.author != self.request.user:
+            Notification.objects.create(
+                recipient=comment.post.author,
+                actor=self.request.user,
+                verb="commented on your post",
+                content_type=ContentType.objects.get_for_model(comment.post),
+                object_id=comment.post.id
+            )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_post(request, pk):
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response({"error": "Post not found"}, status=404)
+
+    like, created = Like.objects.get_or_create(
+        post=post,
+        user=request.user
+    )
+
+    if not created:
+        return Response({"message": "You already liked this post"})
+
+    if post.author != request.user:
+        Notification.objects.create(
+            recipient=post.author,
+            actor=request.user,
+            verb="liked your post",
+            content_type=ContentType.objects.get_for_model(post),
+            object_id=post.id
+        )
+
+    return Response({"message": "Post liked"})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def unlike_post(request, pk):
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response({"error": "Post not found"}, status=404)
+
+    Like.objects.filter(post=post, user=request.user).delete()
+
+    return Response({"message": "Post unliked"})

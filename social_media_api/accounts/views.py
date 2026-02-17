@@ -5,7 +5,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
-
+from django.contrib.contenttypes.models import ContentType
+from notifications.models import Notification
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 
 User = get_user_model()
@@ -61,6 +62,15 @@ def follow_user(request, user_id):
         return Response({"error": "You cannot follow yourself"}, status=400)
 
     request.user.following.add(user_to_follow)
+
+    # 🔔 CREATE NOTIFICATION HERE
+    Notification.objects.create(
+        recipient=user_to_follow,
+        actor=request.user,
+        verb="started following you",
+        content_type=ContentType.objects.get_for_model(user_to_follow),
+        object_id=user_to_follow.id
+    )
 
     return Response({"message": f"You are now following {user_to_follow.username}"})
 

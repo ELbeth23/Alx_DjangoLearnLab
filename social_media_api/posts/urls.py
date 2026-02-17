@@ -6,3 +6,8 @@ router.register(r'posts', PostViewSet)
 router.register(r'comments', CommentViewSet)
 
 urlpatterns = router.urls
+from .views import feed
+
+urlpatterns += [
+    path('feed/', feed, name='feed'),
+]

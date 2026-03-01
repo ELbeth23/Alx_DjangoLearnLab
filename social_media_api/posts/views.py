@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import api_view, permission_classes
@@ -48,14 +48,14 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def feed(request):
     """
     Generate a feed based on posts from users that the current user follows.
     Returns posts ordered by creation date, showing the most recent posts at the top.
     """
-    followed_users = request.user.following.all()
-    posts = Post.objects.filter(author__in=followed_users).order_by('-created_at')
+    following_users = request.user.following.all()
+    posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 

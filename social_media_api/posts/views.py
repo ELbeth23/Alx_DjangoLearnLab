@@ -50,11 +50,14 @@ class CommentViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def feed(request):
-    """Get posts from users that the current user follows"""
+    """
+    Generate a feed based on posts from users that the current user follows.
+    Returns posts ordered by creation date, showing the most recent posts at the top.
+    """
     followed_users = request.user.following.all()
     posts = Post.objects.filter(author__in=followed_users).order_by('-created_at')
     serializer = PostSerializer(posts, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

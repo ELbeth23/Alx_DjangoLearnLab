@@ -53,17 +53,21 @@ class ProfileView(generics.RetrieveAPIView):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def follow_user(request, user_id):
+    """
+    Allow authenticated users to follow other users.
+    Updates the following relationship.
+    """
     try:
         user_to_follow = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=404)
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
     if request.user == user_to_follow:
-        return Response({"error": "You cannot follow yourself"}, status=400)
+        return Response({"error": "You cannot follow yourself"}, status=status.HTTP_400_BAD_REQUEST)
 
     request.user.following.add(user_to_follow)
 
-    # 🔔 CREATE NOTIFICATION HERE
+    # Create notification
     Notification.objects.create(
         recipient=user_to_follow,
         actor=request.user,
@@ -72,20 +76,32 @@ def follow_user(request, user_id):
         object_id=user_to_follow.id
     )
 
-    return Response({"message": f"You are now following {user_to_follow.username}"})
+    return Response({"message": f"You are now following {user_to_follow.username}"}, status=status.HTTP_200_OK)
+
+
+# Alias for compatibility
+followuser = follow_user
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def unfollow_user(request, user_id):
+    """
+    Allow authenticated users to unfollow other users.
+    Updates the following relationship.
+    """
     try:
         user_to_unfollow = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=404)
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
     request.user.following.remove(user_to_unfollow)
 
-    return Response({"message": f"You unfollowed {user_to_unfollow.username}"})
+    return Response({"message": f"You unfollowed {user_to_unfollow.username}"}, status=status.HTTP_200_OK)
+
+
+# Alias for compatibility
+unfollowuser = unfollow_user
 
 
 

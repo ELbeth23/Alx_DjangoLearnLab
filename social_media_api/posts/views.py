@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import api_view, permission_classes
@@ -61,18 +61,12 @@ def feed(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def like_post(request, pk):
     """Like a post"""
-    try:
-        post = Post.objects.get(pk=pk)
-    except Post.DoesNotExist:
-        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    like, created = Like.objects.get_or_create(
-        post=post,
-        user=request.user
-    )
+    post = generics.get_object_or_404(Post, pk=pk)
+    
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if not created:
         return Response({"message": "You already liked this post"}, status=status.HTTP_200_OK)
@@ -91,14 +85,11 @@ def like_post(request, pk):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def unlike_post(request, pk):
     """Unlike a post"""
-    try:
-        post = Post.objects.get(pk=pk)
-    except Post.DoesNotExist:
-        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-
+    post = generics.get_object_or_404(Post, pk=pk)
+    
     deleted_count, _ = Like.objects.filter(post=post, user=request.user).delete()
 
     if deleted_count == 0:

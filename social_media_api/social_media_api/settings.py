@@ -25,7 +25,15 @@ SECRET_KEY = "django-insecure-b6hp^j24msf6as06r6ggfj^)_lyh$#6z38s@3m%yqvy8^i%n-u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+# SECURE_SSL_REDIRECT = True  # Disabled for local development
+# CSRF_COOKIE_SECURE = True  # Disabled for local development
+# SESSION_COOKIE_SECURE = True  # Disabled for local development
+
 
 
 # Application definition

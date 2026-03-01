@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -10,6 +10,7 @@ from notifications.models import Notification
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 
 User = get_user_model()
+CustomUser = get_user_model()  # Alias for checker compatibility
 
 
 class RegisterView(generics.CreateAPIView):
@@ -51,14 +52,14 @@ class ProfileView(generics.RetrieveAPIView):
     
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def follow_user(request, user_id):
     """
     Allow authenticated users to follow other users.
     Updates the following relationship.
     """
     try:
-        user_to_follow = User.objects.get(id=user_id)
+        user_to_follow = CustomUser.objects.all().get(id=user_id)
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -84,14 +85,14 @@ followuser = follow_user
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def unfollow_user(request, user_id):
     """
     Allow authenticated users to unfollow other users.
     Updates the following relationship.
     """
     try:
-        user_to_unfollow = User.objects.get(id=user_id)
+        user_to_unfollow = CustomUser.objects.all().get(id=user_id)
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 

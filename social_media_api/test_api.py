@@ -5,7 +5,7 @@ Run with: python test_api.py
 import requests
 import json
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8000/api"
 
 def test_registration():
     """Test user registration endpoint"""
